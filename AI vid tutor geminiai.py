@@ -1,14 +1,5 @@
 from google import genai
 
-# Initialize the client with your Gemini API Key
-#client = genai.Client(api_key="AIzaSyBFlHcwa5AIMnyWOU6gzVci0vSh8w2mgSQ")#
-
-# Generate a response tailored for your 7-17 age group
-#response = client.models.generate_content(#
-   # model="gemini-2.0-flash", # High speed for real-time interaction
-    #contents="Explain how an AI learns to a 10-year-old using a LEGO analogy."
-#)#
-
 #print(response.text)#
 
 import asyncio
@@ -35,10 +26,10 @@ CURRICULUM_PDF = "curriculum.pdf"
 ##OUTPUT_AUDIO = "tutor_response.mp3"
 #PROFILE_FILE = "student_profile.json"
 
-# 1. Setup Client (Remember to use a .env file later for security!)
+
 client = genai.Client(api_key=API_KEY)
 
-# 2. Define the Personality
+# 2. Defining the Personality
 SYSTEM_INSTRUCTION = """
 You are UpperclassAI Tutor, a world-class adaptive tutor specializing in Artificial Intelligence, Machine Learning, Python programming, Data Science, and Responsible AI.
 - If interests are unknown, ask: "What do you enjoy (games, sports, music, business, science, art)?"
@@ -119,7 +110,7 @@ CURRICULUM KNOWLEDGE
 
 """
 
-# This "chat" object stores the history automatically!
+
 chat_session = client.chats.create(
     model="gemini-2.5-flash",
     config={
@@ -128,7 +119,7 @@ chat_session = client.chats.create(
     }
 )
 
-# 3. LOAD CURRICULUM FROM PDF
+# 3. LOADING CURRICULUM FROM PDF
 def load_curriculum(pdf_path):
     if not os.path.exists(pdf_path):
         raise FileNotFoundError(f"Curriculum PDF not found: {pdf_path}")
@@ -142,13 +133,13 @@ def load_curriculum(pdf_path):
 
     curriculum_text = "\n\n".join(pages)
 
-    # Limit size to reduce token usage if needed
+    # Limiting the size to reduce token usage if needed
     if len(curriculum_text) > 50000:
         curriculum_text = curriculum_text[:50000]
 
     return curriculum_text
 
-# 4. STUDENT PROFILE MANAGEMENT
+# 4. THE STUDENT PROFILE MANAGEMENT
 def load_profile():
     if os.path.exists(PROFILE_FILE):
         with open(PROFILE_FILE, "r", encoding="utf-8") as f:
@@ -241,7 +232,7 @@ def get_voice_by_age(age):
     else:
         return "en-US-AriaNeural"    # Professional adult voice
    
-#build prompt with age context
+#building the prompt with age based context
 def build_prompt(user_input, age):
     age_context = get_age_context(age)
 
@@ -252,7 +243,7 @@ Student Message:
 {user_input}
 """   
 
-# ask age at start
+
 student_age = None
 while student_age is None:
     try:
@@ -263,16 +254,15 @@ while student_age is None:
     except ValueError:
         print("Please enter a valid age.")
 
-# 5. THE NEW PLAY FUNCTION (Much shorter!)
 def play_audio(filename):
     try:
         full_path = os.path.abspath(filename)
         print(f"🔊 Playing via playsound: {full_path}")
-        playsound(full_path) # This blocks automatically until finished
+        playsound(full_path) 
         print("✅ Finished Speaking.")
     except Exception as e:
         print(f"❌ playsound failed: {e}")
-        # Final Emergency: If even this fails, open Windows Player
+       
         os.startfile(filename)
 
 
@@ -281,7 +271,7 @@ def clean_text_for_speech(text):
     Clean tutor text for natural speech.
     """
 
-    # Remove emojis
+    # Removing emojis
     emoji_pattern = re.compile(
         "["
         "\U0001F600-\U0001F64F"  # emoticons
@@ -317,14 +307,14 @@ def clean_text_for_speech(text):
 
 async def tutor_process(user_input, student_age):
     try:
-        # STEP 1: Ask the Brain (Gemini)
+        # Ask the Brain (Gemini)
         print("🧠 Thinking...")
         prompt = build_prompt(user_input, student_age)
         response = chat_session.send_message(prompt)
         tutor_text = response.text
         print(f"📝 Tutor: {tutor_text}")
         
-        # STEP 2: Generate the Voice (Edge-TTS)
+        # Generate the Voice (Edge-TTS)
         voice_name = get_voice_by_age(student_age)
         output_file = "tutor_response.mp3"
         if os.path.exists(output_file):
@@ -335,18 +325,17 @@ async def tutor_process(user_input, student_age):
         communicate = edge_tts.Communicate(speech_text, voice_name)
         await communicate.save(output_file)
         
-        # STEP C: Playback
+        
         play_audio(output_file)
     
     except Exception as e:
         print(f"❌ Error: {e}")
 
-# 6. THE CONTINUOUS LOOP (The Main Block)
+# The Main loop Block
 async def main():
     print("🎓 AI Tutor is Online! (Type 'quit' to exit)")
     
     while True:
-        # Get input from your keyboard
         user_q = input("\n👶 You: ")
         
         if user_q.lower() in ['quit', 'exit', 'bye']:
@@ -356,11 +345,9 @@ async def main():
         if not user_q.strip():
             continue
 
-        # Run one "Turn" of the conversation
+
         await tutor_process(user_q, student_age)
 
 if __name__ == "__main__":
-    # Change this question to test different ages/topics
-    #question = "what is an algorith?"#
     asyncio.run(main())
     
